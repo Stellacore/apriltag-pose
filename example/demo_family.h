@@ -1,11 +1,5 @@
-/* Copyright (C) 2024, Stellacore Corporation.  All rights reserved.
-
-	This file is an extension to the baseline AprilTags Library code
-	developed by The Regents of The University of Michigan 2013-2016.
-	The contents of this are provided under the same license as the
-	original work and subject to same terms as the original work as
-	follows:
-
+/* Copyright (C) 2013-2016, The Regents of The University of Michigan.
+All rights reserved.
 
 This software was developed in the APRIL Robotics Lab under the
 direction of Edwin Olson, ebolson@umich.edu. This software may be
@@ -37,53 +31,44 @@ either expressed or implied, of the Regents of The University of Michigan.
 */
 
 
-#include "demo_family.h"
-
-#include "apriltag.h"
-#include "common/zarray.h"
-
-// application related
-#include "at_options.h"
-
-#include <stdio.h>
-
+#include "tag16h5.h"
+#include "tag25h9.h"
+#include "tag36h11.h"
+#include "tagCircle21h7.h"
+#include "tagCircle49h12.h"
+#include "tagCustom48h12.h"
+#include "tagStandard41h12.h"
+#include "tagStandard52h13.h"
 
 
-int
-main
-	( int argc
-	, char *argv[]
+// Fetch tag characteristics for specified family name
+apriltag_family_t const *
+tagfamily_for_name
+	( char const * const famname
 	)
 {
-	int stat = 1;
-printf("Hello from : %s, argc = %d\n", argv[0], argc);
+	apriltag_family_t const * tf = NULL;
 
-	// parse command line options and check invocation
-	getopt_t * const getopt = apriltagOptions();
-	if ( (! getopt_parse(getopt, argc, argv, 1))
-	   || getopt_get_bool(getopt, "help")
-	   )
-	{
-		printf("Usage: %s [options] <input files>\n", argv[0]);
-		getopt_do_usage(getopt);
-		exit(0);
+	if (!strcmp(famname, "tag36h11")) {
+		tf = tag36h11_create();
+	} else if (!strcmp(famname, "tag25h9")) {
+		tf = tag25h9_create();
+	} else if (!strcmp(famname, "tag16h5")) {
+		tf = tag16h5_create();
+	} else if (!strcmp(famname, "tagCircle21h7")) {
+		tf = tagCircle21h7_create();
+	} else if (!strcmp(famname, "tagCircle49h12")) {
+		tf = tagCircle49h12_create();
+	} else if (!strcmp(famname, "tagStandard41h12")) {
+		tf = tagStandard41h12_create();
+	} else if (!strcmp(famname, "tagStandard52h13")) {
+		tf = tagStandard52h13_create();
+	} else if (!strcmp(famname, "tagCustom48h12")) {
+		tf = tagCustom48h12_create();
+	} else {
+		printf("Unrecognized tag family name. Use e.g. \"tag36h11\".\n");
 	}
 
-	// get configuration information for requested tag family
-	char const * const famname = getopt_get_string(getopt, "family");
-	apriltag_family_t const * const tf = tagfamily_for_name(famname);
-	if (tf)
-	{
-
-//apriltag_detector_t *td = apriltag_detector_create();
-//apriltag_detector_add_family_bits(td, tf, getopt_get_int(getopt, "hamming"));
-
-	// list of input image pathnames
-//	const zarray_t *inputs = getopt_get_extra_args(getopt);
-
-		stat = 0;
-
-	}
-
-	return stat;
+	return tf;
 }
+
