@@ -1,11 +1,5 @@
-/* Copyright (C) 2024, Stellacore Corporation.  All rights reserved.
-
-	This file is an extension to the baseline AprilTags Library code
-	developed by The Regents of The University of Michigan 2013-2016.
-	The contents of this are provided under the same license as the
-	original work and subject to same terms as the original work as
-	follows:
-
+/* Copyright (C) 2013-2016,2024, The Regents of The University of Michigan.
+All rights reserved.
 
 This software was developed in the APRIL Robotics Lab under the
 direction of Edwin Olson, ebolson@umich.edu. This software may be
@@ -36,30 +30,55 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the Regents of The University of Michigan.
 */
 
-#include "apriltag.h"
-
+/*
 #include <stdio.h>
+#include <stdint.h>
+#include <inttypes.h>
+#include <ctype.h>
+#include <math.h>
+#include <errno.h>
 
-// application related
-#include "at_options.h"
+#ifdef __linux__
+    #include <unistd.h>
+#endif
 
+#include "apriltag.h"
+#include "tag36h11.h"
+#include "tag25h9.h"
+#include "tag16h5.h"
+#include "tagCircle21h7.h"
+#include "tagCircle49h12.h"
+#include "tagCustom48h12.h"
+#include "tagStandard41h12.h"
+#include "tagStandard52h13.h"
 
-int
-main
-	( int argc
-	, char *argv[]
-	)
+#include "common/image_u8.h"
+#include "common/pjpeg.h"
+#include "common/zarray.h"
+
+#define  HAMM_HIST_MAX 10
+*/
+
+#include "common/getopt.h"
+
+getopt_t*
+apriltagOptions
+	()
 {
-printf("Hello from : %s, argc = %d\n", argv[0], argc);
+    getopt_t *getopt = getopt_create();
 
-    getopt_t *getopt = apriltagOptions();
+    getopt_add_bool(getopt, 'h', "help", 0, "Show this help");
+    getopt_add_bool(getopt, 'd', "debug", 0, "Enable debugging output (slow)");
+    getopt_add_bool(getopt, 'q', "quiet", 0, "Reduce output");
+    getopt_add_string(getopt, 'f', "family", "tag36h11", "Tag family to use");
+    getopt_add_int(getopt, 'i', "iters", "1", "Repeat processing on input set this many times");
+    getopt_add_int(getopt, 't', "threads", "1", "Use this many CPU threads");
+    getopt_add_int(getopt, 'a', "hamming", "1", "Detect tags with up to this many bit errors.");
+    getopt_add_double(getopt, 'x', "decimate", "2.0", "Decimate input image by this factor");
+    getopt_add_double(getopt, 'b', "blur", "0.0", "Apply low-pass blur to input; negative sharpens");
+    getopt_add_bool(getopt, '0', "refine-edges", 1, "Spend more time trying to align edges of tags");
 
-    if (!getopt_parse(getopt, argc, argv, 1) || getopt_get_bool(getopt, "help")) {
-        printf("Usage: %s [options] <input files>\n", argv[0]);
-        getopt_do_usage(getopt);
-        exit(0);
-    }
-
-
-    return 0;
+	return getopt;
 }
+
+
