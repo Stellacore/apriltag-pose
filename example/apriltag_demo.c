@@ -30,17 +30,6 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the Regents of The University of Michigan.
 */
 
-#include <stdio.h>
-#include <stdint.h>
-#include <inttypes.h>
-#include <ctype.h>
-#include <math.h>
-#include <errno.h>
-
-#ifdef __linux__
-    #include <unistd.h>
-#endif
-
 #include "apriltag.h"
 #include "tag36h11.h"
 #include "tag25h9.h"
@@ -58,6 +47,21 @@ either expressed or implied, of the Regents of The University of Michigan.
 
 // application related
 #include "at_options.h"
+
+// Moved system includes here: ref. e.g.:
+// https://softwareengineering.stackexchange.com/
+//	questions/157275/including-local-headers-first
+// http://linux.topology.org/include.html
+#include <stdio.h>
+#include <stdint.h>
+#include <inttypes.h>
+#include <ctype.h>
+#include <math.h>
+#include <errno.h>
+
+#ifdef __linux__
+    #include <unistd.h>
+#endif
 
 #define  HAMM_HIST_MAX 10
 
