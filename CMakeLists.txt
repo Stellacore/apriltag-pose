@@ -186,9 +186,21 @@ endif()
 
 # Examples
 if (BUILD_EXAMPLES)
-    # apriltag_demo
-    add_executable(apriltag_demo example/apriltag_demo.c)
-    target_link_libraries(apriltag_demo ${PROJECT_NAME})
+
+	# Example/demonstration programs
+	set(ExampProgs
+		apriltag_demo
+		apriltag_pose
+		)
+	# Build example programs
+	foreach(ExampProg ${ExampProgs})
+		# Build example with same name as source file
+		add_executable(${ExampProg} example/${ExampProg}.c)
+		# Link examples to this project library
+		target_link_libraries(${ExampProg} PRIVATE ${PROJECT_NAME})
+		# Include example programs as part of installation process
+		install(TARGETS ${ExampProg} RUNTIME DESTINATION bin)
+	endforeach(ExampProg ${ExampProgs})
 
     # opencv_demo
     set(_OpenCV_REQUIRED_COMPONENTS core imgproc videoio highgui)
@@ -210,8 +222,6 @@ if (BUILD_EXAMPLES)
         message(STATUS "OpenCV not found: Not building demo")
     endif(OpenCV_FOUND)
 
-    # install example programs
-    install(TARGETS apriltag_demo RUNTIME DESTINATION bin)
 endif()
 
 if(BUILD_TESTING)
