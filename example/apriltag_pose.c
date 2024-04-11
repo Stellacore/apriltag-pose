@@ -51,6 +51,26 @@ either expressed or implied, of the Regents of The University of Michigan.
 #include <stdio.h>
 
 
+//! Print info message to stdout (if getopt quiet is not enabled)
+void
+info
+	( getopt_t * const getopt
+	, char * const fmt
+	, ...
+	)
+{
+	int quiet = getopt_get_bool(getopt, "quiet");
+	if (! quiet)
+	{
+		fprintf(stdout, "Info: ");
+
+		va_list argptr;
+		va_start(argptr, fmt);
+		vfprintf(stdout, fmt, argptr);
+		va_end(argptr);
+	}
+}
+
 //! Perform tag detection and image pose estimation on a single image
 bool
 process_one_image
@@ -61,17 +81,14 @@ process_one_image
 {
 	bool okay = false;
 
-	int quiet = getopt_get_bool(getopt, "quiet");
-	if (! quiet)
-	{
-		printf("Info: processing image '%s'\n", imgpath);
-	}
+	info(getopt, "Processing image '%s'\n", imgpath);
 
 	// load input image into memory
 	image_u8_t * const tagimg = create_image_from_path(imgpath);
 	if (tagimg)
 	{
 		zarray_t * detections = apriltag_detector_detect(tagfinder, tagimg);
+		info(getopt, "Number detections '%d'\n", zarray_size(detections));
 
 		// process ...
 		// TODO
