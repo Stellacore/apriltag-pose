@@ -64,8 +64,7 @@ configure_tag_detector
 						" insufficient memory to allocate the tag-family"
 						" decoder. Try reducing \"hamming\" from %d or"
 						" choose an alternative tag family.\n"
-					, getopt_get_int(getopt
-					, "hamming")
+					, getopt_get_int(getopt, "hamming")
 					);
 				break;
 		}

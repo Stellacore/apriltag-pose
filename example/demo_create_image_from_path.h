@@ -9,8 +9,8 @@
 
 
 // Load image from path: (pnm, pgm, jpg supported)
-image_u8_t const *
-image_from_path
+image_u8_t *
+create_image_from_path
 	( char const * const path
 	)
 {

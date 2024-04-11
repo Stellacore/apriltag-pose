@@ -47,7 +47,7 @@ either expressed or implied, of the Regents of The University of Michigan.
 
 // Fetch tag characteristics for specified family name
 apriltag_family_t *
-tagfamily_for_name
+create_tagfamily_for_name
 	( char const * const famname
 	)
 {

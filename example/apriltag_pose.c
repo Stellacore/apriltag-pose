@@ -38,10 +38,10 @@ either expressed or implied, of the Regents of The University of Michigan.
 
 
 // application specific
-#include "demo_family.h"
+#include "demo_create_tagfamily_for_name.h"
 #include "demo_options.h"
 #include "demo_configure_tag_detector.h"
-#include "demo_image_from_path.h"
+#include "demo_create_image_from_path.h"
 
 // library
 #include "apriltag.h"
@@ -49,7 +49,6 @@ either expressed or implied, of the Regents of The University of Michigan.
 
 // system
 #include <stdio.h>
-
 
 
 int
@@ -81,34 +80,39 @@ printf("Hello from : %s, argc = %d\n", argv[0], argc);
 
 	// get configuration information for requested tag family
 	char const * famname = getopt_get_string(getopt, "family");
-	apriltag_family_t * tagfam = tagfamily_for_name(famname);
+	apriltag_family_t * tagfam = create_tagfamily_for_name(famname);
 	if (tagfam)
 	{
-		apriltag_detector_t * tagdtor = apriltag_detector_create();
-		if (configure_tag_detector(tagdtor, getopt, tagfam))
+		// create and populate tag detector instance
+		apriltag_detector_t * tagfinder = apriltag_detector_create();
+		if (configure_tag_detector(tagfinder, getopt, tagfam))
 		{
 
 			// process each image in turn
 			zarray_t const * const inputs = getopt_get_extra_args(getopt);
-			for (int input = 0; input < zarray_size(inputs); ++input)
+			for (int imgNdx = 0; imgNdx < zarray_size(inputs); ++imgNdx)
 			{
-				// load input image
+				// retrieve input path for this iteration
 				char const * imgpath = NULL;
-				zarray_get(inputs, input, &imgpath);
+				zarray_get(inputs, imgNdx, &imgpath);
 
-				image_u8_t const * const tagimg = image_from_path(imgpath);
+				// load input image into memory
+				image_u8_t * const tagimg = create_image_from_path(imgpath);
 				if (! tagimg)
 				{
 					printf("\nUnable to load image from path '%s'\n"
 						, imgpath);
 					continue;
 				}
+				image_u8_destroy(tagimg);
 
 
 			}
 
 			stat = 0;
 		}
+		// cleanup tag detector
+    	apriltag_detector_destroy(tagfinder);
 
 	}
 
