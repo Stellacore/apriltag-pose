@@ -1,11 +1,5 @@
-/* Copyright (C) 2024, Stellacore Corporation.  All rights reserved.
-
-	This file is an extension to the baseline AprilTags Library code
-	developed by The Regents of The University of Michigan 2013-2016.
-	The contents of this are provided under the same license as the
-	original work and subject to same terms as the original work as
-	follows:
-
+/* Copyright (C) 2013-2016, The Regents of The University of Michigan.
+All rights reserved.
 
 This software was developed in the APRIL Robotics Lab under the
 direction of Edwin Olson, ebolson@umich.edu. This software may be
@@ -37,69 +31,56 @@ either expressed or implied, of the Regents of The University of Michigan.
 */
 
 
-// application specific
-#include "demo_family.h"
-#include "demo_options.h"
-#include "demo_configure_tag_detector.h"
+#ifndef _demo_configure_tag_detectorINCL_
+#define _demo_configure_tag_detectorINCL_
 
-// library
+
 #include "apriltag.h"
-#include "common/zarray.h"
 
-// system
-#include <stdio.h>
+#include <errno.h>
 
 
-
-int
-main
-	( int argc
-	, char *argv[]
+bool
+configure_tag_detector
+	( apriltag_detector_t * const tagdtor
+	, getopt_t * const getopt
+	, apriltag_family_t * const tagfam
 	)
 {
-	int stat = 1;
-printf("Hello from : %s, argc = %d\n", argv[0], argc);
+	bool okay = false;
 
-	// parse command line options and check invocation
-	getopt_t * getopt = apriltag_options();
-	if ( (! getopt_parse(getopt, argc, argv, 1))
-	   || getopt_get_bool(getopt, "help")
-	   )
+	// configure details of specified tag family
+	apriltag_detector_add_family_bits
+		( tagdtor, tagfam, getopt_get_int(getopt, "hamming"));
+	if (errno)
 	{
-		printf("Usage: %s [options] <input files>\n", argv[0]);
-		getopt_do_usage(getopt);
-		exit(0);
-	}
-
-	// configure this main app
-//	int quiet = getopt_get_bool(getopt, "quiet");
-
-// TODO ignore this?
-//	int maxiters = getopt_get_int(getopt, "iters");
-
-
-	// get configuration information for requested tag family
-	char const * famname = getopt_get_string(getopt, "family");
-	apriltag_family_t * tagfam = tagfamily_for_name(famname);
-	if (tagfam)
-	{
-		apriltag_detector_t * tagdtor = apriltag_detector_create();
-		if (configure_tag_detector(tagdtor, getopt, tagfam))
+		switch(errno)
 		{
-
-			// process each image in turn
-			zarray_t const * const inputs = getopt_get_extra_args(getopt);
-			for (int input = 0; input < zarray_size(inputs); ++input)
-			{
-				//
-
-
-			}
-
-			stat = 0;
+			case EINVAL:
+				printf("\"hamming\" parameter is out-of-range.\n");
+				break;
+			case ENOMEM:
+				printf("Unable to add family to detector due to"
+						" insufficient memory to allocate the tag-family"
+						" decoder. Try reducing \"hamming\" from %d or"
+						" choose an alternative tag family.\n"
+					, getopt_get_int(getopt
+					, "hamming")
+					);
+				break;
 		}
-
 	}
-
-	return stat;
+	else
+	{
+		tagdtor->quad_decimate = getopt_get_double(getopt, "decimate");
+		tagdtor->quad_sigma = getopt_get_double(getopt, "blur");
+		tagdtor->nthreads = getopt_get_int(getopt, "threads");
+		tagdtor->debug = getopt_get_bool(getopt, "debug");
+		tagdtor->refine_edges = getopt_get_bool(getopt, "refine-edges");
+		okay = true;
+	}
+	return okay;
 }
+
+#endif // _demo_configure_tag_detectorINCL_
+
