@@ -87,12 +87,29 @@ process_one_image
 	image_u8_t * const tagimg = create_image_from_path(imgpath);
 	if (tagimg)
 	{
+		// allocate detection data structures
 		zarray_t * detections = apriltag_detector_detect(tagfinder, tagimg);
-		info(getopt, "Number detections '%d'\n", zarray_size(detections));
 
-		// process ...
-		// TODO
+		// display information about each
+		size_t const numFound = zarray_size(detections);
+		info(getopt, "Number detections '%zu'\n", numFound);
+		for (size_t findNdx = 0 ; findNdx < numFound ; ++findNdx)
+		{
+			apriltag_detection_t const * detection;
+			zarray_get(detections, findNdx, &detection);
+			info(getopt
+				, "detection"
+					" %3d: id (%2dx%2d)-%-4d, hamming %d, margin %8.3f\n"
+				, findNdx
+				, detection->family->nbits
+				, detection->family->h
+				, detection->id
+				, detection->hamming
+				, detection->decision_margin
+				);
+		}
 
+		// free detection structures
 		apriltag_detections_destroy(detections);
 	}
 	else
