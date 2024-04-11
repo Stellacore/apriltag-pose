@@ -243,9 +243,9 @@ main
 	int stat = 1;
 printf("Hello from : %s, argc = %d\n", argv[0], argc);
 
-	// allocate options space
-    getopt_t * getopt = getopt_create();
-	populate_apriltag_options(getopt);
+	// construct tag finding environment from command line options
+	tag_env_t * tagenv = tag_env_new("tag36h11");
+    getopt_t * getopt = tagenv->the_getopt;
 
 	// parse command line options and check invocation
 	if ( (! getopt_parse(getopt, argc, argv, 1))
@@ -270,8 +270,7 @@ printf("Hello from : %s, argc = %d\n", argv[0], argc);
 		}
 	}
 
-	// free options space
-	getopt_destroy(getopt);
+	tag_env_delete(&tagenv);
 
 	return stat;
 }
