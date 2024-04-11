@@ -51,6 +51,131 @@ either expressed or implied, of the Regents of The University of Michigan.
 #include <stdio.h>
 
 
+//! Perform tag detection and image pose estimation on a single image
+bool
+process_one_image
+	( char const * const imgpath
+	, apriltag_detector_t * const tagfinder
+	, getopt_t * const getopt  // mostly for reporting
+	)
+{
+	bool okay = false;
+
+	int quiet = getopt_get_bool(getopt, "quiet");
+	if (! quiet)
+	{
+		printf("Info: processing image '%s'\n", imgpath);
+	}
+
+	// load input image into memory
+	image_u8_t * const tagimg = create_image_from_path(imgpath);
+	if (tagimg)
+	{
+		zarray_t * detections = apriltag_detector_detect(tagfinder, tagimg);
+
+		// process ...
+		// TODO
+
+		apriltag_detections_destroy(detections);
+	}
+	else
+	{
+		printf
+			("\nError: Unable to process image! (process_one_image:)"
+				"\n Explanation...." // TODO
+				"\n Image from: '%s'"
+				"\n"
+			, imgpath
+			);
+	}
+	image_u8_destroy(tagimg);
+
+
+	return okay;
+}
+
+//! Perform tag detection and image orientation all all specified input images
+bool
+process_all_images
+	( getopt_t * const getopt
+	, apriltag_detector_t * const tagfinder
+	)
+{
+	bool allgood = true; // unless proven otherwise
+
+	// process each image in turn
+	zarray_t const * const inputs = getopt_get_extra_args(getopt);
+	for (int imgNdx = 0; imgNdx < zarray_size(inputs); ++imgNdx)
+	{
+		// retrieve input path for this iteration
+		char const * imgpath = NULL;
+		zarray_get(inputs, imgNdx, &imgpath);
+
+		// perform core processing operations
+		bool const okay = process_one_image(imgpath, tagfinder, getopt);
+
+		// exit early if encountring a failure
+		allgood &= okay;
+		if (! allgood)
+		{
+			break;
+		}
+	}
+
+	// return status of processing all images
+	return allgood;
+}
+
+//! Perform tag detection and image orientation all all specified input images
+bool
+run_inside_tag_environment
+	( getopt_t * const getopt
+	)
+{
+	bool okay = false;
+
+	// allocate tag family space
+	char const * famname = getopt_get_string(getopt, "family");
+	// get configuration information for requested tag family
+	apriltag_family_t * tagfam = create_tagfamily(famname);
+
+	if (tagfam)
+	{
+		// create and populate tag detector instance
+		apriltag_detector_t * tagfinder = apriltag_detector_create();
+		if (configure_tag_detector(tagfinder, getopt, tagfam))
+		{
+			// perform core processing (tag detection and pose estimation)
+			okay = process_all_images(getopt, tagfinder);
+		}
+
+		// cleanup tag detector
+		apriltag_detector_destroy(tagfinder);
+	}
+
+	// free tag family space
+	destroy_tagfamily(tagfam, famname);
+
+	return okay;
+}
+
+//! Smallest of the the two arguments (first if same)
+inline
+size_t
+min_of
+	( int const v1
+	, int const v2
+	)
+{
+	int min = v1;
+	if (v2 < v1)
+	{
+		min = v2;
+	}
+	return (size_t)min;
+}
+
+
 int
 main
 	( int argc
@@ -60,64 +185,33 @@ main
 	int stat = 1;
 printf("Hello from : %s, argc = %d\n", argv[0], argc);
 
-	// parse command line options and check invocation
+	// allocate options space
 	getopt_t * getopt = apriltag_options();
+
+	// parse command line options and check invocation
 	if ( (! getopt_parse(getopt, argc, argv, 1))
 	   || getopt_get_bool(getopt, "help")
 	   )
 	{
-		printf("Usage: %s [options] <input files>\n", argv[0]);
+		printf("\nUsage: %s [options] <input files>\n", argv[0]);
 		getopt_do_usage(getopt);
 	}
 	else
 	{
-		// configure this main app
-	//	int quiet = getopt_get_bool(getopt, "quiet");
-
-	// TODO ignore this?
-	//	int maxiters = getopt_get_int(getopt, "iters");
-
-
-		// get configuration information for requested tag family
-		char const * famname = getopt_get_string(getopt, "family");
-		apriltag_family_t * tagfam = create_tagfamily(famname);
-		if (tagfam)
+		// iterate pointlessly if requested
+		// (e.g. to facilitate timing, memory leak checking, etc)
+		size_t const maxiters = min_of(1, getopt_get_int(getopt, "iters"));
+		for (size_t nn = 0 ; nn < maxiters ; ++nn)
 		{
-			// create and populate tag detector instance
-			apriltag_detector_t * tagfinder = apriltag_detector_create();
-			if (configure_tag_detector(tagfinder, getopt, tagfam))
+			if (! run_inside_tag_environment(getopt))
 			{
-
-				// process each image in turn
-				zarray_t const * const inputs = getopt_get_extra_args(getopt);
-				for (int imgNdx = 0; imgNdx < zarray_size(inputs); ++imgNdx)
-				{
-					// retrieve input path for this iteration
-					char const * imgpath = NULL;
-					zarray_get(inputs, imgNdx, &imgpath);
-
-					// load input image into memory
-					image_u8_t * const tagimg = create_image_from_path(imgpath);
-					if (! tagimg)
-					{
-						printf("\nUnable to load image from path '%s'\n"
-							, imgpath);
-						continue;
-					}
-					image_u8_destroy(tagimg);
-
-
-				}
-
-				stat = 0;
+				printf("\nFATAL: unable to process all images! (main:)\n");
+				break;
 			}
-			// cleanup tag detector
-			apriltag_detector_destroy(tagfinder);
-
 		}
-		destroy_tagfamily(tagfam, famname);
 	}
 
+	// free options space
 	getopt_destroy(getopt);
 
 	return stat;

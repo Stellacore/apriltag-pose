@@ -16,6 +16,7 @@ create_image_from_path
 {
 	image_u8_t *im = NULL;
 
+
 	if (  str_ends_with(path, "pnm") || str_ends_with(path, "PNM")
 	   || str_ends_with(path, "pgm") || str_ends_with(path, "PGM")
 	   )
@@ -37,6 +38,18 @@ create_image_from_path
 			im = pjpeg_to_u8_baseline(pjpeg);
 		}
 		pjpeg_destroy(pjpeg);
+	}
+
+	if (! im)
+	{
+		printf
+			("\nError: Unable to load image! (create_image_from_path:)"
+				"\n  Supported formats are 8-bit{ PNM, PGM, JPG }"
+				"\n  (Note: this does not include PPM, nor 16-bit images)"
+				"\n  Load path is '%s'"
+				"\n"
+			, path
+			);
 	}
 
 	return im;
