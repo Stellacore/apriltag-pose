@@ -1,7 +1,6 @@
 
 #ifndef _demo_image_from_path_INCL_
 #define _demo_image_from_path_INCL_
-#endif // _demo_image_from_path_INCL_
 
 
 #include "common/image_u8.h"
@@ -55,4 +54,5 @@ create_image_from_path
 	return im;
 }
 
+#endif // _demo_image_from_path_INCL_
 
