@@ -53,6 +53,27 @@ either expressed or implied, of the Regents of The University of Michigan.
 #include <stdio.h>
 
 
+//
+// Utilities
+//
+
+//! Largest of the two arguments (first if same)
+inline
+size_t
+max_of
+	( int const v1
+	, int const v2
+	)
+{
+	int max = v1;
+	if (v1 < v2)
+	{
+		max = v2;
+	}
+	return (size_t)max;
+}
+
+
 //! Print info message to stdout (if getopt quiet is not enabled)
 void
 info
@@ -72,6 +93,10 @@ info
 		va_end(argptr);
 	}
 }
+
+//
+// Processing functions
+//
 
 //! Perform tag detection and image pose estimation on a single image
 bool
@@ -128,9 +153,12 @@ process_one_image
 			double const err = estimate_tag_pose(&taginfo, &poseTagWrtCam);
 
 			// report results
-			printf("\npose estimation error = %12.9lf\n", err);
-			matd_print(poseTagWrtCam.R, "%9.6lf");
-			matd_print(poseTagWrtCam.t, "%9.6lf");
+			info(getopt, "pose estimation error = %12.9lf\n", err);
+		//	matd_print(poseTagWrtCam.R, "%9.6lf");
+		//	matd_print(poseTagWrtCam.t, "%9.6lf");
+
+			// ?? Doesn't seem to be a way to detect success/fail in pose est.
+			okay = true;
 		}
 
 		// free detection structures
@@ -147,7 +175,6 @@ process_one_image
 			);
 	}
 	image_u8_destroy(tagimg);
-
 
 	return okay;
 }
@@ -184,22 +211,9 @@ process_all_images
 	return allgood;
 }
 
-//! Smallest of the the two arguments (first if same)
-inline
-size_t
-min_of
-	( int const v1
-	, int const v2
-	)
-{
-	int min = v1;
-	if (v2 < v1)
-	{
-		min = v2;
-	}
-	return (size_t)min;
-}
-
+//
+// Main demo application
+//
 
 int
 main
@@ -210,7 +224,7 @@ main
 	int stat = 1;
 printf("Hello from : %s, argc = %d\n", argv[0], argc);
 
-	// construct tag finding environment
+	// construct tag finding environment (memory allocation)
 	tag_env_t * tagenv = tag_env_new("tag36h11");
 	if (tag_env_is_valid(tagenv)) // this should always be true here
 	{
@@ -227,7 +241,7 @@ printf("Hello from : %s, argc = %d\n", argv[0], argc);
 		{
 			// if requested, iterate over all work
 			// (e.g. to facilitate timing, memory leak checking, etc)
-			size_t const maxiters = min_of(1, getopt_get_int(getopt, "iters"));
+			size_t const maxiters = max_of(1, getopt_get_int(getopt, "iters"));
 			for (size_t nn = 0 ; nn < maxiters ; ++nn)
 			{
 				// perform core processing (tag detection and pose estimation)
@@ -247,7 +261,7 @@ printf("Hello from : %s, argc = %d\n", argv[0], argc);
 		fprintf(stderr, "FATAL: catastrophic code error (main:)\n");
 	}
 
-	// cleanup environment
+	// cleanup environment (memory release)
 	tag_env_delete(&tagenv);
 
 	return stat;
