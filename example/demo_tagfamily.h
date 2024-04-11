@@ -47,7 +47,7 @@ either expressed or implied, of the Regents of The University of Michigan.
 
 // Fetch tag characteristics for specified family name
 apriltag_family_t *
-create_tagfamily_for_name
+create_tagfamily
 	( char const * const famname
 	)
 {
@@ -74,6 +74,31 @@ create_tagfamily_for_name
 	}
 
 	return tf;
+}
+
+void
+destroy_tagfamily
+	( apriltag_family_t * const tf
+	, char const * const famname
+	)
+{
+    if (!strcmp(famname, "tag36h11")) {
+        tag36h11_destroy(tf);
+    } else if (!strcmp(famname, "tag25h9")) {
+        tag25h9_destroy(tf);
+    } else if (!strcmp(famname, "tag16h5")) {
+        tag16h5_destroy(tf);
+    } else if (!strcmp(famname, "tagCircle21h7")) {
+        tagCircle21h7_destroy(tf);
+    } else if (!strcmp(famname, "tagCircle49h12")) {
+        tagCircle49h12_destroy(tf);
+    } else if (!strcmp(famname, "tagStandard41h12")) {
+        tagStandard41h12_destroy(tf);
+    } else if (!strcmp(famname, "tagStandard52h13")) {
+        tagStandard52h13_destroy(tf);
+    } else if (!strcmp(famname, "tagCustom48h12")) {
+        tagCustom48h12_destroy(tf);
+    }
 }
 
 #endif // _demo_family_INCL_
