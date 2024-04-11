@@ -184,23 +184,6 @@ process_all_images
 	return allgood;
 }
 
-//! Perform tag detection and image orientation all all specified input images
-bool
-run_inside_tag_environment
-	( tag_env_t * const tagenv
-	)
-{
-	bool okay = false;
-	if (tag_env_is_valid(tagenv))
-	{
-		// perform core processing (tag detection and pose estimation)
-		apriltag_detector_t * tagfinder = tagenv->the_tagfinder;
-		getopt_t * const getopt = tagenv->the_getopt;
-		okay = process_all_images(getopt, tagfinder);
-	}
-	return okay;
-}
-
 //! Smallest of the the two arguments (first if same)
 inline
 size_t
@@ -227,13 +210,12 @@ main
 	int stat = 1;
 printf("Hello from : %s, argc = %d\n", argv[0], argc);
 
-	// construct tag finding environment from command line options
+	// construct tag finding environment
 	tag_env_t * tagenv = tag_env_new("tag36h11");
 	if (tag_env_is_valid(tagenv)) // this should always be true here
 	{
-		getopt_t * getopt = tagenv->the_getopt;
-
 		// parse command line options and check invocation
+		getopt_t * getopt = tagenv->the_getopt;
 		if ( (! getopt_parse(getopt, argc, argv, 1))
 		   || getopt_get_bool(getopt, "help")
 		   )
@@ -243,12 +225,16 @@ printf("Hello from : %s, argc = %d\n", argv[0], argc);
 		}
 		else
 		{
-			// iterate pointlessly if requested
+			// if requested, iterate over all work
 			// (e.g. to facilitate timing, memory leak checking, etc)
 			size_t const maxiters = min_of(1, getopt_get_int(getopt, "iters"));
 			for (size_t nn = 0 ; nn < maxiters ; ++nn)
 			{
-				if (! run_inside_tag_environment(tagenv))
+				// perform core processing (tag detection and pose estimation)
+				apriltag_detector_t * tagfinder = tagenv->the_tagfinder;
+				getopt_t * const getopt = tagenv->the_getopt;
+				bool const okay = process_all_images(getopt, tagfinder);
+				if (! okay)
 				{
 					printf("\nFATAL: unable to process all images! (main:)\n");
 					break;
