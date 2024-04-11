@@ -31,6 +31,10 @@ either expressed or implied, of the Regents of The University of Michigan.
 */
 
 
+#ifndef _demo_family_INCL_
+#define _demo_family_INCL_
+
+
 #include "tag16h5.h"
 #include "tag25h9.h"
 #include "tag36h11.h"
@@ -42,12 +46,12 @@ either expressed or implied, of the Regents of The University of Michigan.
 
 
 // Fetch tag characteristics for specified family name
-apriltag_family_t const *
+apriltag_family_t *
 tagfamily_for_name
 	( char const * const famname
 	)
 {
-	apriltag_family_t const * tf = NULL;
+	apriltag_family_t * tf = NULL;
 
 	if (!strcmp(famname, "tag36h11")) {
 		tf = tag36h11_create();
@@ -71,4 +75,6 @@ tagfamily_for_name
 
 	return tf;
 }
+
+#endif // _demo_family_INCL_
 

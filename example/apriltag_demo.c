@@ -30,6 +30,10 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the Regents of The University of Michigan.
 */
 
+
+// application specific
+#include "demo_options.h"
+
 #include "apriltag.h"
 #include "tag36h11.h"
 #include "tag25h9.h"
@@ -45,10 +49,7 @@ either expressed or implied, of the Regents of The University of Michigan.
 #include "common/pjpeg.h"
 #include "common/zarray.h"
 
-// application related
-#include "demo_options.h"
-
-// Moved system includes here: ref. e.g.:
+// Moved system includes from top to here: ref. e.g.:
 // https://softwareengineering.stackexchange.com/
 //	questions/157275/including-local-headers-first
 // http://linux.topology.org/include.html
@@ -68,7 +69,7 @@ either expressed or implied, of the Regents of The University of Michigan.
 
 int main(int argc, char *argv[])
 {
-    getopt_t *getopt = apriltagOptions();
+    getopt_t *getopt = apriltag_options();
 
     if (!getopt_parse(getopt, argc, argv, 1) || getopt_get_bool(getopt, "help")) {
         printf("Usage: %s [options] <input files>\n", argv[0]);

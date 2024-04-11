@@ -37,15 +37,60 @@ either expressed or implied, of the Regents of The University of Michigan.
 */
 
 
+// application specific
 #include "demo_family.h"
+#include "demo_options.h"
 
+// library
 #include "apriltag.h"
 #include "common/zarray.h"
 
-// application related
-#include "at_options.h"
-
+// system
 #include <stdio.h>
+#include <errno.h>
+
+
+bool
+configure_tag_detector
+	( apriltag_detector_t * const tagdtor
+	, getopt_t * const getopt
+	, apriltag_family_t * const tagfam
+	)
+{
+	bool okay = false;
+
+	// configure details of specified tag family
+	apriltag_detector_add_family_bits
+		( tagdtor, tagfam, getopt_get_int(getopt, "hamming"));
+	if (errno)
+	{
+		switch(errno)
+		{
+			case EINVAL:
+				printf("\"hamming\" parameter is out-of-range.\n");
+				break;
+			case ENOMEM:
+				printf("Unable to add family to detector due to"
+						" insufficient memory to allocate the tag-family"
+						" decoder. Try reducing \"hamming\" from %d or"
+						" choose an alternative tag family.\n"
+					, getopt_get_int(getopt
+					, "hamming")
+					);
+				break;
+		}
+	}
+	else
+	{
+		tagdtor->quad_decimate = getopt_get_double(getopt, "decimate");
+		tagdtor->quad_sigma = getopt_get_double(getopt, "blur");
+		tagdtor->nthreads = getopt_get_int(getopt, "threads");
+		tagdtor->debug = getopt_get_bool(getopt, "debug");
+		tagdtor->refine_edges = getopt_get_bool(getopt, "refine-edges");
+		okay = true;
+	}
+	return okay;
+}
 
 
 
@@ -59,7 +104,7 @@ main
 printf("Hello from : %s, argc = %d\n", argv[0], argc);
 
 	// parse command line options and check invocation
-	getopt_t * const getopt = apriltagOptions();
+	getopt_t * getopt = apriltag_options();
 	if ( (! getopt_parse(getopt, argc, argv, 1))
 	   || getopt_get_bool(getopt, "help")
 	   )
@@ -69,19 +114,33 @@ printf("Hello from : %s, argc = %d\n", argv[0], argc);
 		exit(0);
 	}
 
+	// configure this main app
+//	int quiet = getopt_get_bool(getopt, "quiet");
+
+// TODO ignore this?
+//	int maxiters = getopt_get_int(getopt, "iters");
+
+
 	// get configuration information for requested tag family
-	char const * const famname = getopt_get_string(getopt, "family");
-	apriltag_family_t const * const tf = tagfamily_for_name(famname);
-	if (tf)
+	char const * famname = getopt_get_string(getopt, "family");
+	apriltag_family_t * tagfam = tagfamily_for_name(famname);
+	if (tagfam)
 	{
+		apriltag_detector_t * tagdtor = apriltag_detector_create();
+		if (configure_tag_detector(tagdtor, getopt, tagfam))
+		{
 
-//apriltag_detector_t *td = apriltag_detector_create();
-//apriltag_detector_add_family_bits(td, tf, getopt_get_int(getopt, "hamming"));
+			// process each image in turn
+			zarray_t const * const inputs = getopt_get_extra_args(getopt);
+			for (int input = 0; input < zarray_size(inputs); ++input)
+			{
+				//
 
-	// list of input image pathnames
-//	const zarray_t *inputs = getopt_get_extra_args(getopt);
 
-		stat = 0;
+			}
+
+			stat = 0;
+		}
 
 	}
 

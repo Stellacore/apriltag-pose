@@ -30,39 +30,16 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the Regents of The University of Michigan.
 */
 
-/*
-#include <stdio.h>
-#include <stdint.h>
-#include <inttypes.h>
-#include <ctype.h>
-#include <math.h>
-#include <errno.h>
 
-#ifdef __linux__
-    #include <unistd.h>
-#endif
+#ifndef _demo_options_INCL_
+#define _demo_options_INCL_
 
-#include "apriltag.h"
-#include "tag36h11.h"
-#include "tag25h9.h"
-#include "tag16h5.h"
-#include "tagCircle21h7.h"
-#include "tagCircle49h12.h"
-#include "tagCustom48h12.h"
-#include "tagStandard41h12.h"
-#include "tagStandard52h13.h"
-
-#include "common/image_u8.h"
-#include "common/pjpeg.h"
-#include "common/zarray.h"
-
-#define  HAMM_HIST_MAX 10
-*/
 
 #include "common/getopt.h"
 
-getopt_t*
-apriltagOptions
+
+getopt_t *
+apriltag_options
 	()
 {
     getopt_t *getopt = getopt_create();
@@ -81,4 +58,5 @@ apriltagOptions
 	return getopt;
 }
 
+#endif // _demo_options_INCL_
 
