@@ -38,12 +38,11 @@ either expressed or implied, of the Regents of The University of Michigan.
 #include "common/getopt.h"
 
 
-getopt_t *
-apriltag_options
-	()
+void
+populate_apriltag_options
+    ( getopt_t * getopt
+	)
 {
-    getopt_t *getopt = getopt_create();
-
     getopt_add_bool(getopt, 'h', "help", 0, "Show this help");
     getopt_add_bool(getopt, 'd', "debug", 0, "Enable debugging output (slow)");
     getopt_add_bool(getopt, 'q', "quiet", 0, "Reduce output");
@@ -54,8 +53,6 @@ apriltag_options
     getopt_add_double(getopt, 'x', "decimate", "2.0", "Decimate input image by this factor");
     getopt_add_double(getopt, 'b', "blur", "0.0", "Apply low-pass blur to input; negative sharpens");
     getopt_add_bool(getopt, '0', "refine-edges", 1, "Spend more time trying to align edges of tags");
-
-	return getopt;
 }
 
 #endif // _demo_options_INCL_

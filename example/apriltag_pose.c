@@ -42,6 +42,7 @@ either expressed or implied, of the Regents of The University of Michigan.
 #include "demo_options.h"
 #include "demo_configure_tag_detector.h"
 #include "demo_image.h"
+#include "demo_TagEnv.h"
 
 // library
 #include "apriltag.h"
@@ -209,6 +210,20 @@ min_of
 	return (size_t)min;
 }
 
+/*
+struct TagEnv
+{
+	getopt_t * getopt = apriltag_options();
+
+	char * famname
+	apriltag_family_t * tagfam = create_tagfamily(famname);
+
+	image_u8_t * const tagimg = create_image_from_path(imgpath);
+	apriltag_detector_t * tagfinder = apriltag_detector_create();
+	zarray_t * detections = apriltag_detector_detect(tagfinder, tagimg);
+}
+*/
+
 
 int
 main
@@ -220,7 +235,8 @@ main
 printf("Hello from : %s, argc = %d\n", argv[0], argc);
 
 	// allocate options space
-	getopt_t * getopt = apriltag_options();
+    getopt_t * getopt = getopt_create();
+	populate_apriltag_options(getopt);
 
 	// parse command line options and check invocation
 	if ( (! getopt_parse(getopt, argc, argv, 1))

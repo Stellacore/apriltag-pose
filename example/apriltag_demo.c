@@ -69,7 +69,8 @@ either expressed or implied, of the Regents of The University of Michigan.
 
 int main(int argc, char *argv[])
 {
-    getopt_t *getopt = apriltag_options();
+    getopt_t * getopt = getopt_create();
+    populate_apriltag_options(getopt);
 
     if (!getopt_parse(getopt, argc, argv, 1) || getopt_get_bool(getopt, "help")) {
         printf("Usage: %s [options] <input files>\n", argv[0]);
