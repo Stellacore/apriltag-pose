@@ -61,6 +61,80 @@ either expressed or implied, of the Regents of The University of Michigan.
 // Utilities
 //
 
+//! 3x3 rotation matrix data
+struct rmat3
+{
+	double the_data[9];
+};
+typedef struct rmat3 rmat3_t;
+
+//! 3d translation vector data
+struct tvec3
+{
+	double the_data[3];
+};
+typedef struct tvec3 tvec3_t;
+
+// #define RMAT_EL(rmat, row, col) (rmat).the_data[((row)*3u + (col))]
+// #define TVEC_EL(tvec, row) (tvec).the_data[(row)]
+
+//! Fill rmat3_t data contents with values from content of matd
+void
+fill_rmat3_from_matd
+	( rmat3_t * const pt_rmat
+	, matd_t const * const pt_matd
+	)
+{
+	if ((3u == pt_matd->nrows) && (3u == pt_matd->ncols))
+	{
+		for (size_t ndx=0 ; ndx < 9u ; ++ndx)
+		{
+			pt_rmat->the_data[ndx] = pt_matd->data[ndx];
+		}
+	}
+	else
+	{
+		fprintf(stderr, "Bad dimensions for (fill_rmat3_from_matd):"
+				"\npt_rmat size: (%u x %u)"
+				"\n   matd size: (%u x %u)"
+				"\nFix calling code!\n"
+			, 3u, 3u
+			, pt_matd->nrows, pt_matd->ncols
+			);
+		fflush(stderr);
+		exit(-1);
+	}
+}
+
+//! Fill tvec3_t data contents with values from content of matd
+void
+fill_tvec3_from_matd
+	( tvec3_t * const pt_tvec
+	, matd_t const * const pt_matd
+	)
+{
+	unsigned int const matd_size = (pt_matd->nrows * pt_matd->ncols);
+	if (3u == matd_size)
+	{
+		pt_tvec->the_data[0] = pt_matd->data[0];
+		pt_tvec->the_data[1] = pt_matd->data[1];
+		pt_tvec->the_data[2] = pt_matd->data[2];
+	}
+	else
+	{
+		fprintf(stderr, "Bad dimensions for (fill_tvec3_from_matd):"
+				"\npt_tvec size: (%u)"
+				"\n   matd size: (%u)"
+				"\nFix calling code!\n"
+			, 3u
+			, matd_size
+			);
+		fflush(stderr);
+		exit(-1);
+	}
+}
+
+
 //! Largest of the two arguments (first if same)
 inline
 size_t
@@ -152,26 +226,32 @@ process_one_image
 				, .cy = 312.5
 				};
 
+			// NOTE: estimate_tag_pose() allocates space that is
+			//       attached to consumer code data pointers
+			//       inside of 'apriltag_post_t' structure.
+			// therefore...
+
 			// perform pose estimation
-			apriltag_pose_t poseTagWrtCam;
-// TODO
-// TODO estimate_tag_pose leaks memory !!
-// TODO
-// Observed leak is order of 15MB/7min
-// at about .00117 sec per run - is about 360k runs
-// so 15000kB per 360k runs is about 40 bytes per run.
-// For comparison,
-//   R,t matrice are about 16*8 = 128 bytes, 
-//   R mat is about 9*8 = 56 bytes
-// So, perhaps leaking a rotation matrix?
-// or perhaps one of the U,S,V matrix in svd? etc..
-//
+			apriltag_pose_t poseTagWrtCam; // Will require deallocation
 			double const err = estimate_tag_pose(&taginfo, &poseTagWrtCam);
+
+			// ... it is necessary for consumer to free the library-
+			//       allocated data values after using (or copying)
+			//       the data values into application management space.
+			rmat3_t rmat;
+			fill_rmat3_from_matd(&rmat, poseTagWrtCam.R);
+			tvec3_t tvec;
+			fill_tvec3_from_matd(&tvec, poseTagWrtCam.t);
+
+			// ...   destroy data space allocated from inside
+			//       the estimate_tag_pose() call.
+			matd_destroy(poseTagWrtCam.R);
+			matd_destroy(poseTagWrtCam.t);
 
 			// report results
 			info(getopt, "pose estimation error = %12.9lf\n", err);
-		//	matd_print(poseTagWrtCam.R, "%9.6lf");
-		//	matd_print(poseTagWrtCam.t, "%9.6lf");
+//			rmat3_print(rmat, "%9.6lf");
+//			tvec3_print(tvec, "%9.6lf");
 
 			// ?? Doesn't seem to be a way to detect success/fail in pose est.
 			okay = true;
