@@ -1,15 +1,19 @@
 /* Copyright (C) 2024, Stellacore Corporation.  All rights reserved.
 
-	This file is an extension to the baseline AprilTags Library code
-	developed by The Regents of The University of Michigan 2013-2016.
-	The contents of this are provided under the same license as the
-	original work and subject to same terms as the original work as
-	follows:
+	This file is an extension to the baseline AprilTags Library code:
+	which is copyright The Regents of The University of Michigan 2013-2016.
 
+	The original AprilTags software was developed in the APRIL Robotics
+	Lab under the direction of Edwin Olson, ebolson@umich.edu. This
+	software may be available under alternative licensing terms; contact
+	the address above.
 
-This software was developed in the APRIL Robotics Lab under the
-direction of Edwin Olson, ebolson@umich.edu. This software may be
-available under alternative licensing terms; contact the address above.
+	Ref: AprilTags:
+	  https://april.eecs.umich.edu/software/apriltag
+	  https://github.com/AprilRobotics/apriltag/blob/master/LICENSE.md
+
+	This extension file and its contents are provided under the same
+	"BSD 2-Clause License" terms as the original work:
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -53,6 +57,27 @@ either expressed or implied, of the Regents of The University of Michigan.
 #include <stdio.h>
 
 
+//
+// Utilities
+//
+
+//! Largest of the two arguments (first if same)
+inline
+size_t
+max_of
+	( int const v1
+	, int const v2
+	)
+{
+	int max = v1;
+	if (v1 < v2)
+	{
+		max = v2;
+	}
+	return (size_t)max;
+}
+
+
 //! Print info message to stdout (if getopt quiet is not enabled)
 void
 info
@@ -72,6 +97,10 @@ info
 		va_end(argptr);
 	}
 }
+
+//
+// Processing functions
+//
 
 //! Perform tag detection and image pose estimation on a single image
 bool
@@ -128,9 +157,12 @@ process_one_image
 			double const err = estimate_tag_pose(&taginfo, &poseTagWrtCam);
 
 			// report results
-			printf("\npose estimation error = %12.9lf\n", err);
-			matd_print(poseTagWrtCam.R, "%9.6lf");
-			matd_print(poseTagWrtCam.t, "%9.6lf");
+			info(getopt, "pose estimation error = %12.9lf\n", err);
+		//	matd_print(poseTagWrtCam.R, "%9.6lf");
+		//	matd_print(poseTagWrtCam.t, "%9.6lf");
+
+			// ?? Doesn't seem to be a way to detect success/fail in pose est.
+			okay = true;
 		}
 
 		// free detection structures
@@ -147,7 +179,6 @@ process_one_image
 			);
 	}
 	image_u8_destroy(tagimg);
-
 
 	return okay;
 }
@@ -184,55 +215,9 @@ process_all_images
 	return allgood;
 }
 
-//! Perform tag detection and image orientation all all specified input images
-bool
-run_inside_tag_environment
-	( getopt_t * const getopt
-	)
-{
-	bool okay = false;
-
-	// allocate tag family space
-	char const * famname = getopt_get_string(getopt, "family");
-	// get configuration information for requested tag family
-	apriltag_family_t * tagfam = create_tagfamily(famname);
-
-	if (tagfam)
-	{
-		// create and populate tag detector instance
-		apriltag_detector_t * tagfinder = apriltag_detector_create();
-		if (configure_tag_detector(tagfinder, getopt, tagfam))
-		{
-			// perform core processing (tag detection and pose estimation)
-			okay = process_all_images(getopt, tagfinder);
-		}
-
-		// cleanup tag detector
-		apriltag_detector_destroy(tagfinder);
-	}
-
-	// free tag family space
-	destroy_tagfamily(tagfam, famname);
-
-	return okay;
-}
-
-//! Smallest of the the two arguments (first if same)
-inline
-size_t
-min_of
-	( int const v1
-	, int const v2
-	)
-{
-	int min = v1;
-	if (v2 < v1)
-	{
-		min = v2;
-	}
-	return (size_t)min;
-}
-
+//
+// Main demo application
+//
 
 int
 main
@@ -243,35 +228,45 @@ main
 	int stat = 1;
 printf("Hello from : %s, argc = %d\n", argv[0], argc);
 
-	// allocate options space
-    getopt_t * getopt = getopt_create();
-	populate_apriltag_options(getopt);
-
-	// parse command line options and check invocation
-	if ( (! getopt_parse(getopt, argc, argv, 1))
-	   || getopt_get_bool(getopt, "help")
-	   )
+	// construct tag finding environment (memory allocation)
+	tag_env_t * tagenv = tag_env_new("tag36h11");
+	if (tag_env_is_valid(tagenv)) // this should always be true here
 	{
-		printf("\nUsage: %s [options] <input files>\n", argv[0]);
-		getopt_do_usage(getopt);
-	}
-	else
-	{
-		// iterate pointlessly if requested
-		// (e.g. to facilitate timing, memory leak checking, etc)
-		size_t const maxiters = min_of(1, getopt_get_int(getopt, "iters"));
-		for (size_t nn = 0 ; nn < maxiters ; ++nn)
+		// parse command line options and check invocation
+		getopt_t * getopt = tagenv->the_getopt;
+		if ( (! getopt_parse(getopt, argc, argv, 1))
+		   || getopt_get_bool(getopt, "help")
+		   )
 		{
-			if (! run_inside_tag_environment(getopt))
+			printf("\nUsage: %s [options] <input files>\n", argv[0]);
+			getopt_do_usage(getopt);
+		}
+		else
+		{
+			// if requested, iterate over all work
+			// (e.g. to facilitate timing, memory leak checking, etc)
+			size_t const maxiters = max_of(1, getopt_get_int(getopt, "iters"));
+			for (size_t nn = 0 ; nn < maxiters ; ++nn)
 			{
-				printf("\nFATAL: unable to process all images! (main:)\n");
-				break;
+				// perform core processing (tag detection and pose estimation)
+				apriltag_detector_t * tagfinder = tagenv->the_tagfinder;
+				getopt_t * const getopt = tagenv->the_getopt;
+				bool const okay = process_all_images(getopt, tagfinder);
+				if (! okay)
+				{
+					printf("\nFATAL: unable to process all images! (main:)\n");
+					break;
+				}
 			}
 		}
 	}
+	else
+	{
+		fprintf(stderr, "FATAL: catastrophic code error (main:)\n");
+	}
 
-	// free options space
-	getopt_destroy(getopt);
+	// cleanup environment (memory release)
+	tag_env_delete(&tagenv);
 
 	return stat;
 }
