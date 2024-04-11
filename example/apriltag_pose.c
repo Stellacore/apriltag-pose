@@ -44,10 +44,48 @@ either expressed or implied, of the Regents of The University of Michigan.
 
 // library
 #include "apriltag.h"
+#include "common/image_u8.h"
+#include "common/pjpeg.h"
 #include "common/zarray.h"
 
 // system
 #include <stdio.h>
+
+
+
+// Load image from path: (pnm, pgm, jpg supported)
+image_u8_t const *
+image_from_path
+	( char const * const path
+	)
+{
+	image_u8_t *im = NULL;
+
+	if (  str_ends_with(path, "pnm") || str_ends_with(path, "PNM")
+	   || str_ends_with(path, "pgm") || str_ends_with(path, "PGM")
+	   )
+	{
+		im = image_u8_create_from_pnm(path);
+	}
+	else
+	if (str_ends_with(path, "jpg") || str_ends_with(path, "JPG"))
+	{
+		int err = 0;
+		pjpeg_t * const pjpeg = pjpeg_create_from_file(path, 0, &err);
+		if (pjpeg == NULL)
+		{
+			printf("pjpeg failed to load: %s, error %d\n", path, err);
+			return im; // TODO
+		}
+		else
+		{
+			im = pjpeg_to_u8_baseline(pjpeg);
+		}
+		pjpeg_destroy(pjpeg);
+	}
+
+	return im;
+}
 
 
 
@@ -91,7 +129,17 @@ printf("Hello from : %s, argc = %d\n", argv[0], argc);
 			zarray_t const * const inputs = getopt_get_extra_args(getopt);
 			for (int input = 0; input < zarray_size(inputs); ++input)
 			{
-				//
+				// load input image
+				char const * imgpath = NULL;
+				zarray_get(inputs, input, &imgpath);
+
+				image_u8_t const * const tagimg = image_from_path(imgpath);
+				if (! tagimg)
+				{
+					printf("\nUnable to load image from path '%s'\n"
+						, imgpath);
+					continue;
+				}
 
 
 			}
