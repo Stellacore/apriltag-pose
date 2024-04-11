@@ -38,14 +38,14 @@ typedef struct tag_env tag_env_t;
 // True if all tagenv members are not null (hopefully this means valid;-)
 bool
 tag_env_is_valid
-	( tag_env_t const tagenv
+	( tag_env_t const * const tagenv
 	)
 {
 	return
-		(  tagenv.the_getopt
-		&& tagenv.the_tagfam_name
-		&& tagenv.the_tagfamily
-		&& tagenv.the_tagfinder
+		(  tagenv->the_getopt
+		&& tagenv->the_tagfam_name
+		&& tagenv->the_tagfamily
+		&& tagenv->the_tagfinder
 		);
 }
 

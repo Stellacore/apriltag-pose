@@ -187,33 +187,17 @@ process_all_images
 //! Perform tag detection and image orientation all all specified input images
 bool
 run_inside_tag_environment
-	( getopt_t * const getopt
+	( tag_env_t * const tagenv
 	)
 {
 	bool okay = false;
-
-	// allocate tag family space
-	char const * famname = getopt_get_string(getopt, "family");
-	// get configuration information for requested tag family
-	apriltag_family_t * tagfam = create_tagfamily(famname);
-
-	if (tagfam)
+	if (tag_env_is_valid(tagenv))
 	{
-		// create and populate tag detector instance
-		apriltag_detector_t * tagfinder = apriltag_detector_create();
-		if (configure_tag_detector(tagfinder, getopt, tagfam))
-		{
-			// perform core processing (tag detection and pose estimation)
-			okay = process_all_images(getopt, tagfinder);
-		}
-
-		// cleanup tag detector
-		apriltag_detector_destroy(tagfinder);
+		// perform core processing (tag detection and pose estimation)
+		apriltag_detector_t * tagfinder = tagenv->the_tagfinder;
+		getopt_t * const getopt = tagenv->the_getopt;
+		okay = process_all_images(getopt, tagfinder);
 	}
-
-	// free tag family space
-	destroy_tagfamily(tagfam, famname);
-
 	return okay;
 }
 
@@ -245,31 +229,39 @@ printf("Hello from : %s, argc = %d\n", argv[0], argc);
 
 	// construct tag finding environment from command line options
 	tag_env_t * tagenv = tag_env_new("tag36h11");
-    getopt_t * getopt = tagenv->the_getopt;
+	if (tag_env_is_valid(tagenv)) // this should always be true here
+	{
+		getopt_t * getopt = tagenv->the_getopt;
 
-	// parse command line options and check invocation
-	if ( (! getopt_parse(getopt, argc, argv, 1))
-	   || getopt_get_bool(getopt, "help")
-	   )
-	{
-		printf("\nUsage: %s [options] <input files>\n", argv[0]);
-		getopt_do_usage(getopt);
-	}
-	else
-	{
-		// iterate pointlessly if requested
-		// (e.g. to facilitate timing, memory leak checking, etc)
-		size_t const maxiters = min_of(1, getopt_get_int(getopt, "iters"));
-		for (size_t nn = 0 ; nn < maxiters ; ++nn)
+		// parse command line options and check invocation
+		if ( (! getopt_parse(getopt, argc, argv, 1))
+		   || getopt_get_bool(getopt, "help")
+		   )
 		{
-			if (! run_inside_tag_environment(getopt))
+			printf("\nUsage: %s [options] <input files>\n", argv[0]);
+			getopt_do_usage(getopt);
+		}
+		else
+		{
+			// iterate pointlessly if requested
+			// (e.g. to facilitate timing, memory leak checking, etc)
+			size_t const maxiters = min_of(1, getopt_get_int(getopt, "iters"));
+			for (size_t nn = 0 ; nn < maxiters ; ++nn)
 			{
-				printf("\nFATAL: unable to process all images! (main:)\n");
-				break;
+				if (! run_inside_tag_environment(tagenv))
+				{
+					printf("\nFATAL: unable to process all images! (main:)\n");
+					break;
+				}
 			}
 		}
 	}
+	else
+	{
+		fprintf(stderr, "FATAL: catastrophic code error (main:)\n");
+	}
 
+	// cleanup environment
 	tag_env_delete(&tagenv);
 
 	return stat;
