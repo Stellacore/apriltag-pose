@@ -31,8 +31,8 @@ either expressed or implied, of the Regents of The University of Michigan.
 */
 
 
-#ifndef _demo_configure_tag_detectorINCL_
-#define _demo_configure_tag_detectorINCL_
+#ifndef _demo_configure_tag_detector_INCL_
+#define _demo_configure_tag_detector_INCL_
 
 
 #include "apriltag.h"
@@ -82,5 +82,5 @@ configure_tag_detector
 	return okay;
 }
 
-#endif // _demo_configure_tag_detectorINCL_
+#endif // _demo_configure_tag_detector_INCL_
 
