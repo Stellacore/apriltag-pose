@@ -42,10 +42,11 @@ either expressed or implied, of the Regents of The University of Michigan.
 #include "demo_options.h"
 #include "demo_configure_tag_detector.h"
 #include "demo_image.h"
-#include "demo_TagEnv.h"
+#include "demo_tag_env.h"
 
 // library
 #include "apriltag.h"
+#include "apriltag_pose.h"
 #include "common/zarray.h"
 
 // system
@@ -96,7 +97,8 @@ process_one_image
 		info(getopt, "Number detections '%zu'\n", numFound);
 		for (size_t findNdx = 0 ; findNdx < numFound ; ++findNdx)
 		{
-			apriltag_detection_t const * detection;
+			// display detection info
+			apriltag_detection_t * detection;
 			zarray_get(detections, findNdx, &detection);
 			info(getopt
 				, "detection"
@@ -108,6 +110,27 @@ process_one_image
 				, detection->hamming
 				, detection->decision_margin
 				);
+
+			// consfigure space resection required geometry info
+			// (detected measurements, tag size, camera geometry)
+			apriltag_detection_info_t taginfo =
+				{ .det = detection
+				, .tagsize = .114
+				// guess for image (841w,625h)
+				, .fx = 500.
+				, .fy = 500.
+				, .cx = 420.5
+				, .cy = 312.5
+				};
+
+			// perform pose estimation
+			apriltag_pose_t poseTagWrtCam;
+			double const err = estimate_tag_pose(&taginfo, &poseTagWrtCam);
+
+			// report results
+			printf("\npose estimation error = %12.9lf\n", err);
+			matd_print(poseTagWrtCam.R, "%9.6lf");
+			matd_print(poseTagWrtCam.t, "%9.6lf");
 		}
 
 		// free detection structures
@@ -117,7 +140,7 @@ process_one_image
 	{
 		printf
 			("\nError: Unable to process image! (process_one_image:)"
-				"\n Explanation...." // TODO
+			//	"\n Explanation...." // TODO
 				"\n Image from: '%s'"
 				"\n"
 			, imgpath
@@ -209,20 +232,6 @@ min_of
 	}
 	return (size_t)min;
 }
-
-/*
-struct TagEnv
-{
-	getopt_t * getopt = apriltag_options();
-
-	char * famname
-	apriltag_family_t * tagfam = create_tagfamily(famname);
-
-	image_u8_t * const tagimg = create_image_from_path(imgpath);
-	apriltag_detector_t * tagfinder = apriltag_detector_create();
-	zarray_t * detections = apriltag_detector_detect(tagfinder, tagimg);
-}
-*/
 
 
 int
