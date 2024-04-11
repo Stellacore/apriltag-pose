@@ -154,6 +154,18 @@ process_one_image
 
 			// perform pose estimation
 			apriltag_pose_t poseTagWrtCam;
+// TODO
+// TODO estimate_tag_pose leaks memory !!
+// TODO
+// Observed leak is order of 15MB/7min
+// at about .00117 sec per run - is about 360k runs
+// so 15000kB per 360k runs is about 40 bytes per run.
+// For comparison,
+//   R,t matrice are about 16*8 = 128 bytes, 
+//   R mat is about 9*8 = 56 bytes
+// So, perhaps leaking a rotation matrix?
+// or perhaps one of the U,S,V matrix in svd? etc..
+//
 			double const err = estimate_tag_pose(&taginfo, &poseTagWrtCam);
 
 			// report results
