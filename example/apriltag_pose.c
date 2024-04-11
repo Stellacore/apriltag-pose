@@ -1,15 +1,19 @@
 /* Copyright (C) 2024, Stellacore Corporation.  All rights reserved.
 
-	This file is an extension to the baseline AprilTags Library code
-	developed by The Regents of The University of Michigan 2013-2016.
-	The contents of this are provided under the same license as the
-	original work and subject to same terms as the original work as
-	follows:
+	This file is an extension to the baseline AprilTags Library code:
+	which is copyright The Regents of The University of Michigan 2013-2016.
 
+	The original AprilTags software was developed in the APRIL Robotics
+	Lab under the direction of Edwin Olson, ebolson@umich.edu. This
+	software may be available under alternative licensing terms; contact
+	the address above.
 
-This software was developed in the APRIL Robotics Lab under the
-direction of Edwin Olson, ebolson@umich.edu. This software may be
-available under alternative licensing terms; contact the address above.
+	Ref: AprilTags:
+	  https://april.eecs.umich.edu/software/apriltag
+	  https://github.com/AprilRobotics/apriltag/blob/master/LICENSE.md
+
+	This extension file and its contents are provided under the same
+	"BSD 2-Clause License" terms as the original work:
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:

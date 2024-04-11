@@ -1,9 +1,19 @@
-/* Copyright (C) 2013-2016, The Regents of The University of Michigan.
-All rights reserved.
+/* Copyright (C) 2024, Stellacore Corporation.  All rights reserved.
 
-This software was developed in the APRIL Robotics Lab under the
-direction of Edwin Olson, ebolson@umich.edu. This software may be
-available under alternative licensing terms; contact the address above.
+	This file is an extension to the baseline AprilTags Library code:
+	which is copyright The Regents of The University of Michigan 2013-2016.
+
+	The original AprilTags software was developed in the APRIL Robotics
+	Lab under the direction of Edwin Olson, ebolson@umich.edu. This
+	software may be available under alternative licensing terms; contact
+	the address above.
+
+	Ref: AprilTags:
+	  https://april.eecs.umich.edu/software/apriltag
+	  https://github.com/AprilRobotics/apriltag/blob/master/LICENSE.md
+
+	This extension file and its contents are provided under the same
+	"BSD 2-Clause License" terms as the original work:
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,7 +39,6 @@ The views and conclusions contained in the software and documentation are those
 of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the Regents of The University of Michigan.
 */
-
 
 #ifndef _demo_configure_tag_detector_INCL_
 #define _demo_configure_tag_detector_INCL_
