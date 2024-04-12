@@ -176,6 +176,50 @@ info
 // Processing functions
 //
 
+//! TBD convention for pose
+struct stack_pose3d
+{
+	tvec3_t the_tvec; // TODO ?
+	rmat3_t the_rmat; // TODO ?
+	double the_err;  // rmse image residual (back projection) error?
+};
+typedef struct stack_pose3d stack_pose3d_t;
+
+
+//! Perform pose estimation and put results into pt_sr
+void
+do_pose_estimation
+	( stack_pose3d_t * const pt_pose3
+	, apriltag_detection_info_t * pt_taginfo
+	)
+{
+	// Use apriltag structure to hold pose estimation results
+	tvec3_t * pt_tvec = &(pt_pose3->the_tvec);
+	rmat3_t * pt_rmat = &(pt_pose3->the_rmat);
+	double * pt_err = &(pt_pose3->the_err);
+
+	// NOTE: estimate_tag_pose() allocates space that is
+	//       attached to consumer code data pointers
+	//       inside of 'apriltag_post_t' structure.
+	// therefore...
+
+	// perform pose estimation
+	apriltag_pose_t poseTagWrtCam; // Will require deallocation
+	*pt_err = estimate_tag_pose(pt_taginfo, &poseTagWrtCam);
+
+	// ... it is necessary for consumer to free the library-
+	//       allocated data values after using (or copying)
+	//       the data values into application management space.
+	fill_tvec3_from_matd(pt_tvec, poseTagWrtCam.t);
+	fill_rmat3_from_matd(pt_rmat, poseTagWrtCam.R);
+
+	// ...   destroy data space allocated from inside
+	//       the estimate_tag_pose() call.
+	matd_destroy(poseTagWrtCam.R);
+	matd_destroy(poseTagWrtCam.t);
+}
+
+
 //! Perform tag detection and image pose estimation on a single image
 bool
 process_one_image
@@ -199,9 +243,6 @@ process_one_image
 		size_t const numFound = zarray_size(detections);
 		info(getopt, "Number detections '%zu'\n", numFound);
 		// space resection result data
-		rmat3_t pose_rmat;
-		tvec3_t pose_tvec;
-		double pose_err;
 		for (size_t findNdx = 0 ; findNdx < numFound ; ++findNdx)
 		{
 			// display detection info
@@ -230,28 +271,10 @@ process_one_image
 				, .cy = 312.5
 				};
 
-			// NOTE: estimate_tag_pose() allocates space that is
-			//       attached to consumer code data pointers
-			//       inside of 'apriltag_post_t' structure.
-			// therefore...
-
-			// perform pose estimation
-			apriltag_pose_t poseTagWrtCam; // Will require deallocation
-			pose_err = estimate_tag_pose(&taginfo, &poseTagWrtCam);
-
-			// ... it is necessary for consumer to free the library-
-			//       allocated data values after using (or copying)
-			//       the data values into application management space.
-			fill_rmat3_from_matd(&pose_rmat, poseTagWrtCam.R);
-			fill_tvec3_from_matd(&pose_tvec, poseTagWrtCam.t);
-
-			// ...   destroy data space allocated from inside
-			//       the estimate_tag_pose() call.
-			matd_destroy(poseTagWrtCam.R);
-			matd_destroy(poseTagWrtCam.t);
-
-			// report results
-			info(getopt, "pose estimation error = %12.9lf\n", pose_err);
+			stack_pose3d_t pose;
+			do_pose_estimation(&pose, &taginfo);
+			info(getopt
+				, "pose estimation error = %12.9lf\n", pose.the_err);
 
 			// ?? Doesn't seem to be a way to detect success/fail in pose est.
 			okay = true;
