@@ -198,6 +198,10 @@ process_one_image
 		// display information about each
 		size_t const numFound = zarray_size(detections);
 		info(getopt, "Number detections '%zu'\n", numFound);
+		// space resection result data
+		rmat3_t pose_rmat;
+		tvec3_t pose_tvec;
+		double pose_err;
 		for (size_t findNdx = 0 ; findNdx < numFound ; ++findNdx)
 		{
 			// display detection info
@@ -233,15 +237,13 @@ process_one_image
 
 			// perform pose estimation
 			apriltag_pose_t poseTagWrtCam; // Will require deallocation
-			double const err = estimate_tag_pose(&taginfo, &poseTagWrtCam);
+			pose_err = estimate_tag_pose(&taginfo, &poseTagWrtCam);
 
 			// ... it is necessary for consumer to free the library-
 			//       allocated data values after using (or copying)
 			//       the data values into application management space.
-			rmat3_t rmat;
-			fill_rmat3_from_matd(&rmat, poseTagWrtCam.R);
-			tvec3_t tvec;
-			fill_tvec3_from_matd(&tvec, poseTagWrtCam.t);
+			fill_rmat3_from_matd(&pose_rmat, poseTagWrtCam.R);
+			fill_tvec3_from_matd(&pose_tvec, poseTagWrtCam.t);
 
 			// ...   destroy data space allocated from inside
 			//       the estimate_tag_pose() call.
@@ -249,9 +251,7 @@ process_one_image
 			matd_destroy(poseTagWrtCam.t);
 
 			// report results
-			info(getopt, "pose estimation error = %12.9lf\n", err);
-//			rmat3_print(rmat, "%9.6lf");
-//			tvec3_print(tvec, "%9.6lf");
+			info(getopt, "pose estimation error = %12.9lf\n", pose_err);
 
 			// ?? Doesn't seem to be a way to detect success/fail in pose est.
 			okay = true;
